@@ -6,12 +6,14 @@ const Schema = mongoose.Schema
 const ChatSchema = new Schema(
   {
     owner: {
-      id: { type: mongoose.Schema.Types.ObjectId, required: true },
-      model: { type: String, required: true, enum: ['Staff', 'Student', 'Center'] },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
     },
     user: {
-      id: { type: mongoose.Schema.Types.ObjectId, required: true },
-      model: { type: String, required: true, enum: ['Staff', 'Student', 'Center'] },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
     },
     message: {
       type: mongoose.Schema.Types.ObjectId,

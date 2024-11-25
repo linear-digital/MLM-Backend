@@ -9,6 +9,9 @@ const authChecker = require("./util/authChecker");
 const updateSetting = require("./Routes/Settings/updateSetting");
 const User = require("./Routes/User/user.model");
 const Withdraw = require("./Routes/WithDraw/withdraw.model");
+const Message = require("./Routes/message/message.model");
+const { createMessage } = require("./Routes/message/message.service");
+const Chat = require("./Routes/message/chat.model");
 require("dotenv").config();
 
 const app = express();
@@ -21,7 +24,7 @@ const server = createServer(app);
 const io = new Server(server, {
     cors: {
         origin: "*", // Allow all origins or specify your front-end URL
-        methods: ["GET", "POST"],
+        methods: ["GET", "POST", "PUT", "DELETE"],
     },
 });
 
@@ -95,21 +98,38 @@ app.put('/api/v1/setting', authChecker, async (req, res) => {
 });
 
 const connectedSockets = new Map();
+const sendToSpecificUser = (socketId, data) => {
+    console.log(socketId);
+    if (connectedSockets.has(socketId)) {
+        const socket2 = connectedSockets.get(socketId);
+        socket2.emit("message", data);
+    }
+    else {
+        console.log("User not found", socketId);
+    }
+
+};
 // Listen for Socket.IO connections
 io.on("connection", (socket) => {
     socket.id = socket.handshake.query.user
     connectedSockets.set(socket.id, socket);
-    console.log(`Socket connected: ${socket.id}`);
-
+    const msf = {
+        message: "Hello",
+        receiver: "6744dca88af50aaf008eae99",
+        sender: "6692b4224d24dd0065d7a93b",
+        chat: "6744dce38af50aaf008eaf07"
+    }
     // Handle events
-    socket.on("message", (data) => {
-        console.log("Message received:", data);
-        io.emit("message", data); 
+    socket.on("message", async (data) => {
+        const result = await createMessage(data);
+    
+        sendToSpecificUser(data.receiver, result)
+        sendToSpecificUser(data.sender, result)
     });
 
     // Handle disconnections
     socket.on("disconnect", () => {
-        console.log(`Socket disconnected: ${socket.id}`);
+        // console.log(`Socket disconnected: ${socket.id}`);
     });
 });
 

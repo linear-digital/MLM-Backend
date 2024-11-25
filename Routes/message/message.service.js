@@ -8,8 +8,8 @@ const createMessage = async (data) => {
         const result = await newMessage.save()
         await Chat.updateMany({
             $or: [
-                { "owner.id": data.sender, "user.id": data.receiver },
-                { "owner.id": data.receiver, "user.id": data.sender },
+                { owner: data.sender, user: data.receiver },
+                { owner: data.receiver, user: data.sender },
             ],
         }, {
             message: result._id
@@ -29,8 +29,8 @@ const createNewChat = async (data) => {
 
         // Check if a chat already exists in both possible directions
         const [existingChat1, existingChat2] = await Promise.all([
-            Chat.findOne({ "user.id": owner.id, "owner.id": user.id }),
-            Chat.findOne({ "user.id": user.id, "owner.id": owner.id }),
+            Chat.findOne({ user: owner, owner: user }),
+            Chat.findOne({ user: user, owner: owner }),
         ]);
 
         // Create a new chat if no existing chat in either direction
@@ -50,18 +50,9 @@ const createNewChat = async (data) => {
 
         // Populate the chat before returning
         if (chatToReturn) {
-            await chatToReturn.populate([
-                {
-                    path: 'owner.id',
-                    model: chatToReturn.owner.model, // Dynamic model
-                    select: 'firstName lastName profilePic',
-                },
-                {
-                    path: 'user.id',
-                    model: chatToReturn.user.model, // Dynamic model
-                    select: 'firstName lastName profilePic',
-                },
-            ]);
+            await chatToReturn.populate('owner', 'name username');
+            await chatToReturn.populate('user', 'name username');
+            await chatToReturn.populate('message');
         }
 
         return chatToReturn;
@@ -75,33 +66,9 @@ const getChats = async () => {
     try {
         // Fetch chats without population
         const chats = await Chat.find()
+            .populate('owner', 'name username')
+            .populate('user', 'name username')
             .sort({ updatedAt: -1 })
-
-        // Dynamically apply population for each chat
-        await Promise.all(
-            chats.map(async (chat) => {
-                // Populate owner dynamically
-                if (chat.owner?.id && chat.owner?.model) {
-                    await chat.populate({
-                        path: 'owner.id',
-                        model: chat.owner.model, // Specify dynamic model
-                        select: 'firstName lastName profilePic',
-                    });
-                }
-
-                // Populate user dynamically
-                if (chat.user?.id && chat.user?.model) {
-                    await chat.populate({
-                        path: 'user.id',
-                        model: chat.user.model, // Specify dynamic model
-                        select: 'firstName lastName profilePic',
-                    });
-                }
-
-                // Populate message (static reference)
-                await chat.populate('message');
-            })
-        );
 
         return chats;
     } catch (error) {
@@ -111,34 +78,13 @@ const getChats = async () => {
 
 const chatByUser = async (id) => {
     try {
+
         // Fetch chats without population
-        const chats = await Chat.find({ "owner.id": id })
+        const chats = await Chat.find({ owner: id })
+            .populate('owner', 'name username')
+            .populate('user', 'name username')
+            .populate('message')
             .sort({ updatedAt: -1 })
-
-        // Dynamically apply population based on the `model` field
-        for (const chat of chats) {
-            // // Populate owner dynamically
-            // if (chat.owner?.id && chat.owner?.model) {
-            //     await chat.populate({
-            //         path: 'owner.id',
-            //         model: chat.owner.model as DynamicModel, // Dynamically select the model
-            //         select: 'firstName lastName profilePic',
-            //     });
-            // }
-
-            // Populate user dynamically
-            if (chat.user?.id && chat.user?.model) {
-                await chat.populate({
-                    path: 'user.id',
-                    model: chat.user.model, // Dynamically select the model
-                    select: 'firstName lastName profilePic',
-                });
-            }
-
-            // Populate message (static reference)
-            await chat.populate('message');
-        }
-
         return chats;
     } catch (error) {
         throw new Error(error.message || 'Error fetching chats');
@@ -146,30 +92,13 @@ const chatByUser = async (id) => {
 }
 const getAChat = async (id) => {
     try {
+
         const chat = await Chat.findById(id)
+            .populate('owner', 'name username')
+            .populate('user', 'name username')
         if (!chat) {
             throw new Error('Chat not found');
         }
-        // Populate owner dynamically
-        if (chat.owner?.id && chat.owner?.model) {
-            await chat.populate({
-                path: 'owner.id',
-                model: chat.owner.model, // Dynamically select the model
-                select: 'firstName lastName profilePic',
-            });
-        }
-
-        // Populate user dynamically
-        if (chat.user?.id && chat.user?.model) {
-            await chat.populate({
-                path: 'user.id',
-                model: chat.user.model, // Dynamically select the model
-                select: 'firstName lastName profilePic',
-            });
-        }
-
-        // Populate message (static reference)
-        await chat.populate('message');
 
         return chat
     } catch (error) {
@@ -179,12 +108,13 @@ const getAChat = async (id) => {
 
 const getMessages = async (query) => {
     try {
-        const chat = await Chat.findById(query.chat)
-        if (!chat) {
-            throw new Error('Chat not found');
-        }
+        const sender = query.sender
+        const receiver = query.receiver
         const messages = await Message.find({
-            chat: query.chat
+           $or: [
+                { sender: sender, receiver: receiver },
+                { sender: receiver, receiver: sender },
+            ],
         })
         return messages
     } catch (error) {

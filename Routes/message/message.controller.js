@@ -6,7 +6,9 @@ const createMessage = async (req, res) => {
         const result = await messageService.createMessage(data)
         res.send(result)
     } catch (error) {
-        res.status(500).send(error)
+        res.status(500).send({
+            message: error.message
+        })
     }
 }
 
@@ -18,7 +20,9 @@ const createNewChat = async (req, res) => {
 
         res.send(result)
     } catch (error) {
-        res.status(500).send(error)
+        res.status(500).send({
+            message: error.message
+        })
     }
 }
 
@@ -27,7 +31,9 @@ const getChats = async (req, res) => {
         const result = await messageService.getChats()
         res.send(result)
     } catch (error) {
-        res.status(500).send(error)
+        res.status(500).send({
+            message: error.message
+        })
     }
 }
 const chatByUser = async (req, res) => {
@@ -35,7 +41,9 @@ const chatByUser = async (req, res) => {
         const result = await messageService.chatByUser(req.params.id)
         res.send(result)
     } catch (error) {
-        res.status(500).send(error)
+        res.status(500).send({
+            message: error.message
+        })
     }
 }
 
@@ -44,7 +52,9 @@ const getAChat = async (req, res) => {
         const result = await messageService.getAChat(req.params.id)
         res.send(result)
     } catch (error) {
-        res.status(500).send(error)
+        res.status(500).send({
+            message: error.message
+        })
     }
 }
 const getMessages = async (req, res) => {
@@ -52,7 +62,9 @@ const getMessages = async (req, res) => {
         const result = await messageService.getMessages(req.query)
         res.send(result)
     } catch (error) {
-        res.status(500).send(error)
+        res.status(500).send({
+            message: error.message
+        })
     }
 }
 const deleteMessage = async (req, res) => {
@@ -60,7 +72,9 @@ const deleteMessage = async (req, res) => {
         const result = await messageService.deleteMessage(req.params.id)
         res.send(result)
     } catch (error) {
-        res.status(500).send(error)
+        res.status(500).send({
+            message: error.message
+        })
     }
 }
 const messageController = {
@@ -78,7 +92,7 @@ router.post("/chat", messageController.createNewChat)
 router.get("/chats", messageController.getChats)
 router.get("/user/:id", messageController.chatByUser)
 router.get("/:id", messageController.getAChat)
-router.get("/messages", messageController.getMessages)
+router.get("/msg/all", messageController.getMessages)
 router.delete("/:id", messageController.deleteMessage)
 
 module.exports = router
