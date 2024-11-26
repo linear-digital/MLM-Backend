@@ -113,12 +113,6 @@ const sendToSpecificUser = (socketId, data) => {
 io.on("connection", (socket) => {
     socket.id = socket.handshake.query.user
     connectedSockets.set(socket.id, socket);
-    const msf = {
-        message: "Hello",
-        receiver: "6744dca88af50aaf008eae99",
-        sender: "6692b4224d24dd0065d7a93b",
-        chat: "6744dce38af50aaf008eaf07"
-    }
     // Handle events
     socket.on("message", async (data) => {
         const result = await createMessage(data);

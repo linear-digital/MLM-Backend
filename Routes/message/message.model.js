@@ -20,7 +20,7 @@ const schema = new mongoose.Schema({
         type: String,
     },
     image: {
-        type: [mongoose.Schema.Types.ObjectId],
+        type: String
     },
     likes: {
         type: [mongoose.Schema.Types.ObjectId],
