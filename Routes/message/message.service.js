@@ -50,8 +50,8 @@ const createNewChat = async (data) => {
 
         // Populate the chat before returning
         if (chatToReturn) {
-            await chatToReturn.populate('owner', 'name username');
-            await chatToReturn.populate('user', 'name username');
+            await chatToReturn.populate('owner', 'name username active lastActive');
+            await chatToReturn.populate('user', 'name username active lastActive');
             await chatToReturn.populate('message');
         }
 
@@ -66,8 +66,8 @@ const getChats = async () => {
     try {
         // Fetch chats without population
         const chats = await Chat.find()
-            .populate('owner', 'name username')
-            .populate('user', 'name username')
+            .populate('owner', 'name username active lastActive')
+            .populate('user', 'name username active lastActive')
             .sort({ updatedAt: -1 })
 
         return chats;
@@ -81,8 +81,8 @@ const chatByUser = async (id) => {
 
         // Fetch chats without population
         const chats = await Chat.find({ owner: id })
-            .populate('owner', 'name username')
-            .populate('user', 'name username')
+            .populate('owner', 'name username active lastActive')
+            .populate('user', 'name username active lastActive')
             .populate('message')
             .sort({ updatedAt: -1 })
         return chats;
@@ -94,8 +94,8 @@ const getAChat = async (id) => {
     try {
 
         const chat = await Chat.findById(id)
-            .populate('owner', 'name username')
-            .populate('user', 'name username')
+            .populate('owner', 'name username active lastActive')
+            .populate('user', 'name username active lastActive')
         if (!chat) {
             throw new Error('Chat not found');
         }

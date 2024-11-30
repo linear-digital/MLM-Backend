@@ -76,6 +76,13 @@ const userSchema = new mongoose.Schema({
     lock: {
         type: Boolean,
         default: false
+    },
+    active: {
+        type: Boolean,
+        default: false
+    },
+    lastActive: {
+        type: Date
     }
 }, {
     timestamps: true,

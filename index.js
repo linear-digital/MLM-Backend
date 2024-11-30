@@ -23,7 +23,7 @@ const server = createServer(app);
 // Set up Socket.IO
 const io = new Server(server, {
     cors: {
-        origin: "*", // Allow all origins or specify your front-end URL
+        origin: ["http://localhost:4321", "https://cnppromo.vercel.app"], // Allow all origins or specify your front-end URL
         methods: ["GET", "POST", "PUT", "DELETE"],
     },
 });
@@ -109,21 +109,51 @@ const sendToSpecificUser = (socketId, data) => {
     }
 
 };
+io.use(async (socket, next) => {
+    try {
+        const userId = socket.handshake.query.user;
+        if (!userId) {
+            return next(new Error('Authentication error'));
+        }
+        const user = await User.findById(userId);
+        if (!user) {
+            return next(new Error('User not found'));
+        }
+        socket.user = user;
+        socket.id = userId
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
+const statusUpdater = async (socketId, status) => {
+    try {
+        const result = await User.findByIdAndUpdate(socketId, { active: status, lastActive: Date.now() }, { new: true });
+        if (!result) {
+            console.log("User not found");
+        }
+    } catch (error) {
+        console.log(error);
+    }
+}
 // Listen for Socket.IO connections
 io.on("connection", (socket) => {
-    socket.id = socket.handshake.query.user
+    const userId = socket.handshake.query.user;
+    socket.id = userId;
     connectedSockets.set(socket.id, socket);
+    statusUpdater(userId, true);
+
     // Handle events
     socket.on("message", async (data) => {
         const result = await createMessage(data);
-    
+
         sendToSpecificUser(data.receiver, result)
         sendToSpecificUser(data.sender, result)
     });
 
     // Handle disconnections
     socket.on("disconnect", () => {
-        // console.log(`Socket disconnected: ${socket.id}`);
+        statusUpdater(userId, false);
     });
 });
 
