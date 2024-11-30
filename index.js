@@ -12,6 +12,7 @@ const Withdraw = require("./Routes/WithDraw/withdraw.model");
 const Message = require("./Routes/message/message.model");
 const { createMessage } = require("./Routes/message/message.service");
 const Chat = require("./Routes/message/chat.model");
+const Refer = require("./Routes/Refer/refer.model");
 require("dotenv").config();
 
 const app = express();
@@ -91,15 +92,41 @@ app.put('/api/v1/setting', authChecker, async (req, res) => {
         const response = await updateSetting(req.body);
         res.send(response);
     } catch (error) {
-        res.status(500).send({
+        res.sendStatus(500).send({
             message: error.message,
         });
     }
 });
 
+// app.get('/update', async (req, res) => {
+//     try {
+//         const users = await User.find(); // Get all user documents
+//         const totalUsers = users.length;
+
+//         const result = await Promise.all(
+//             users.map(async (user, index) => {
+//                 const countRefer = await Refer.countDocuments({ reffer: user._id, gen: 1 });
+//                 const level = countRefer > 160 ? 3 : countRefer > 40 ? 2 : 1;
+
+//                 await User.findByIdAndUpdate(user._id, { level }, { new: true });
+//                 return `${index + 1}/${totalUsers}`;
+//             })
+//         );
+
+//         res.send({
+//             message: `Updated ${result.length} users successfully.`,
+//             details: result,
+//         });
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).send({
+//             message: error.message,
+//         });
+//     }
+// });
+
 const connectedSockets = new Map();
 const sendToSpecificUser = (socketId, data) => {
-    console.log(socketId);
     if (connectedSockets.has(socketId)) {
         const socket2 = connectedSockets.get(socketId);
         socket2.emit("message", data);
@@ -136,6 +163,8 @@ const statusUpdater = async (socketId, status) => {
         console.log(error);
     }
 }
+
+
 // Listen for Socket.IO connections
 io.on("connection", (socket) => {
     const userId = socket.handshake.query.user;

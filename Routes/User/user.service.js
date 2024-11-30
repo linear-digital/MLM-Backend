@@ -8,6 +8,7 @@ const Withdraw = require("../WithDraw/withdraw.model");
 const User = require("./user.model");
 const bcrypt = require("bcrypt");
 const mailerService = require("../mailer/mailer");
+const Refer = require("../Refer/refer.model");
 const createUser = async (req, res) => {
     try {
         const isExist = await User.findOne({ email: req.body.email, username: req.body.username });
@@ -348,11 +349,17 @@ const activeAnUser = async (req, res) => {
         user.status = "active";
         await user.save();
         if (user.reffer) {
-            const inGen1 = await createRefer({ user: user._id, reffer: user.reffer, gen: 1, commition: setting.ref_comm.gen1 });
+
             const refferUser = await User.findById(user.reffer);
+            const refCommission = refferUser.level === 1 ? 30 : refferUser.level === 2 ? 35 : refferUser.level === 3 && 40
+
+            const inGen1 = await createRefer({ user: user._id, reffer: user.reffer, gen: 1, commition: refCommission });
+
+            const countRefer = await Refer.countDocuments({ reffer: refferUser._id, gen: 1 });
             // add balance on account of generation1
             await User.findByIdAndUpdate(refferUser._id, {
-                $inc: { balance: setting.ref_comm.gen1 }
+                $inc: { balance: refCommission },
+                level: countRefer > 40 ? 2 : countRefer > 160 ? 3 : 1
             })
             // check 2nd Generation is available ?
             if (refferUser.reffer) {
@@ -464,7 +471,7 @@ const resetPassword = async (req, res) => {
         const toke = jwt.sign({ id: user._id, email: user.email, username: user.username }, process.env.JWT_SECRET, {
             expiresIn: "1h"
         });
-       const restll = await mailerService.sendResetCode(user.email, toke);
+        const restll = await mailerService.sendResetCode(user.email, toke);
         res.send(restll);
     } catch (error) {
         res.status(500).send({
