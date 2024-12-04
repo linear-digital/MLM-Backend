@@ -20,15 +20,21 @@ const port = process.env.PORT || 4000;
 
 // Create HTTP server for Socket.IO
 const server = createServer(app);
-
+const allowedOrigins = [
+  "http://localhost:4321",
+  "https://cnppromo.vercel.app",
+  "https://admin.socket.io",
+];
 // Set up Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:4321",
-      "https://cnppromo.vercel.app",
-      "https://admin.socket.io",
-    ], // Allow all origins or specify your front-end URL
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Origin not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
 });
