@@ -14,7 +14,7 @@ const { createMessage } = require("./Routes/message/message.service");
 const Chat = require("./Routes/message/chat.model");
 const Refer = require("./Routes/Refer/refer.model");
 require("dotenv").config();
-
+const { instrument } = require("@socket.io/admin-ui");
 const app = express();
 const port = process.env.PORT || 4000;
 
@@ -23,12 +23,23 @@ const server = createServer(app);
 
 // Set up Socket.IO
 const io = new Server(server, {
-    cors: {
-        origin: ["http://localhost:4321", "https://cnppromo.vercel.app"], // Allow all origins or specify your front-end URL
-        methods: ["GET", "POST", "PUT", "DELETE"],
-    },
+  cors: {
+    origin: [
+      "http://localhost:4321",
+      "https://cnppromo.vercel.app",
+      "https://admin.socket.io",
+    ], // Allow all origins or specify your front-end URL
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  },
 });
 
+instrument(io, {
+  auth: {
+    type: "basic",
+    username: "admin",
+    password: "$2a$12$aT17OgQqaKX6lEHNkYTY7Ou.iMG1GVTESRXpUDKjRpjQbamqGPQ..",
+  },
+});
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
@@ -37,65 +48,65 @@ app.use(bodyParser.json());
 connectDB();
 
 // Routes
-app.use('/api/v1', require('./Routes/index'));
-app.get('/', (req, res) => {
-    res.send({
-        message: "Server Is Running",
-    });
+app.use("/api/v1", require("./Routes/index"));
+app.get("/", (req, res) => {
+  res.send({
+    message: "Server Is Running",
+  });
 });
 
 // Get site settings
-app.get('/api/v1/setting', async (req, res) => {
-    try {
-        const response = await getSetting();
-        res.send(response);
-    } catch (error) {
-        res.status(500).send({
-            message: error.message,
-        });
-    }
+app.get("/api/v1/setting", async (req, res) => {
+  try {
+    const response = await getSetting();
+    res.send(response);
+  } catch (error) {
+    res.status(500).send({
+      message: error.message,
+    });
+  }
 });
 
 // Statistics route
-app.get('/api/v1/statistic', async (req, res) => {
-    try {
-        const total = await User.countDocuments();
-        const active = await User.countDocuments({ status: "active" });
-        const pending = await User.countDocuments({ status: "pending" });
-        const blocked = await User.countDocuments({ lock: true });
-        const total_withdraw = await Withdraw.find({ status: "completed" });
-        const totalAmmount = total_withdraw
-            .map(withdraw => withdraw.amount)
-            .reduce((a, b) => a + b, 0);
-        res.send({
-            total: 32000 + total,
-            active: 30001 + active,
-            pending,
-            blocked,
-            total_withdraw: totalAmmount,
-        });
-    } catch (error) {
-        res.status(500).send({
-            message: error.message,
-        });
-    }
+app.get("/api/v1/statistic", async (req, res) => {
+  try {
+    const total = await User.countDocuments();
+    const active = await User.countDocuments({ status: "active" });
+    const pending = await User.countDocuments({ status: "pending" });
+    const blocked = await User.countDocuments({ lock: true });
+    const total_withdraw = await Withdraw.find({ status: "completed" });
+    const totalAmmount = total_withdraw
+      .map((withdraw) => withdraw.amount)
+      .reduce((a, b) => a + b, 0);
+    res.send({
+      total: 32000 + total,
+      active: 30001 + active,
+      pending,
+      blocked,
+      total_withdraw: totalAmmount,
+    });
+  } catch (error) {
+    res.status(500).send({
+      message: error.message,
+    });
+  }
 });
 
 // Update settings
-app.put('/api/v1/setting', authChecker, async (req, res) => {
-    try {
-        if (req.user.role !== 'admin') {
-            return res.status(400).send({
-                message: "Who are you pokinni",
-            });
-        }
-        const response = await updateSetting(req.body);
-        res.send(response);
-    } catch (error) {
-        res.sendStatus(500).send({
-            message: error.message,
-        });
+app.put("/api/v1/setting", authChecker, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(400).send({
+        message: "Who are you pokinni",
+      });
     }
+    const response = await updateSetting(req.body);
+    res.send(response);
+  } catch (error) {
+    res.sendStatus(500).send({
+      message: error.message,
+    });
+  }
 });
 
 // app.get('/update', async (req, res) => {
@@ -127,64 +138,67 @@ app.put('/api/v1/setting', authChecker, async (req, res) => {
 
 const connectedSockets = new Map();
 const sendToSpecificUser = (socketId, data) => {
-    if (connectedSockets.has(socketId)) {
-        const socket2 = connectedSockets.get(socketId);
-        socket2.emit("message", data);
-    }
-    else {
-        console.log("User not found", socketId);
-    }
-
+  if (connectedSockets.has(socketId)) {
+    const socket2 = connectedSockets.get(socketId);
+    socket2.emit("message", data);
+  } else {
+    console.log("User not found", socketId);
+  }
 };
 io.use(async (socket, next) => {
-    try {
-        const userId = socket.handshake.query.user;
-        if (!userId) {
-            return next(new Error('Authentication error'));
-        }
-        const user = await User.findById(userId);
-        if (!user) {
-            return next(new Error('User not found'));
-        }
-        socket.user = user;
-        socket.id = userId
-        next();
-    } catch (error) {
-        next(error);
+  try {
+    const userId = socket.handshake.query.user;
+    if (!userId) {
+      return next(new Error("Authentication error"));
     }
+    const user = await User.findById(userId);
+    if (!user) {
+      return next(new Error("User not found"));
+    }
+    socket.user = user;
+    socket.id = userId;
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 const statusUpdater = async (socketId, status) => {
-    try {
-        const result = await User.findByIdAndUpdate(socketId, { active: status, lastActive: Date.now() }, { new: true });
-        if (!result) {
-            console.log("User not found");
-        }
-    } catch (error) {
-        console.log(error);
+  try {
+    const result = await User.findByIdAndUpdate(
+      socketId,
+      { active: status, lastActive: Date.now() },
+      { new: true }
+    );
+    if (!result) {
+      console.log("User not found");
     }
-}
-
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 // Listen for Socket.IO connections
 io.on("connection", (socket) => {
-    const userId = socket.handshake.query.user;
-    socket.id = userId;
-    connectedSockets.set(socket.id, socket);
-    statusUpdater(userId, true);
+  const userId = socket.handshake.query.user;
+  socket.id = userId;
+  connectedSockets.set(socket.id, socket);
+  statusUpdater(userId, true);
 
-    // Handle events
-    socket.on("message", async (data) => {
-        const result = await createMessage(data);
+  // Handle events
+  socket.on("message", async (data) => {
+    const result = await createMessage(data);
 
-        sendToSpecificUser(data.receiver, result)
-        sendToSpecificUser(data.sender, result)
-    });
+    sendToSpecificUser(data.receiver, result);
+    sendToSpecificUser(data.sender, result);
+  });
 
-    // Handle disconnections
-    socket.on("disconnect", () => {
-        statusUpdater(userId, false);
-    });
+  // Handle disconnections
+  socket.on("disconnect", () => {
+    statusUpdater(userId, false);
+  });
 });
 
 // Start the server
-server.listen(port, () => console.log(`Server listening on http://localhost:${port}`));
+server.listen(port, () =>
+  console.log(`Server listening on http://localhost:${port}`)
+);
