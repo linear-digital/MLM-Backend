@@ -40,11 +40,7 @@ const io = new Server(server, {
 });
 
 instrument(io, {
-  auth: {
-    type: "basic",
-    username: "admin",
-    password: "$2a$12$aT17OgQqaKX6lEHNkYTY7Ou.iMG1GVTESRXpUDKjRpjQbamqGPQ..",
-  },
+  auth: false,
   mode: "production",
 });
 // Middleware
