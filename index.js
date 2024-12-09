@@ -45,6 +45,7 @@ instrument(io, {
     username: "admin",
     password: "$2a$12$aT17OgQqaKX6lEHNkYTY7Ou.iMG1GVTESRXpUDKjRpjQbamqGPQ..",
   },
+  mode: "production",
 });
 // Middleware
 app.use(cors());
