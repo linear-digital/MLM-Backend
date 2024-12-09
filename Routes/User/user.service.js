@@ -359,7 +359,7 @@ const activeAnUser = async (req, res) => {
             // add balance on account of generation1
             await User.findByIdAndUpdate(refferUser._id, {
                 $inc: { balance: refCommission },
-                level: countRefer > 40 ? 2 : countRefer > 160 ? 3 : 1
+                level: countRefer > 80 ? 2 : countRefer > 160 ? 3 : 1
             })
             // check 2nd Generation is available ?
             if (refferUser.reffer) {
