@@ -23,7 +23,7 @@ const server = createServer(app);
 const allowedOrigins = [
   "http://localhost:4321",
   "https://cnppromo.vercel.app",
-  "https://admin.socket.io",
+  "https://admin.socket.io", // Add this line
 ];
 // Set up Socket.IO
 const io = new Server(server, {
@@ -32,19 +32,33 @@ const io = new Server(server, {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error("Origin not allowed by CORS"));
+        console.log(`Origin ${origin} is not allowed by CORS`);
+        callback(new Error("Not allowed by CORS"));
       }
     },
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
+  transports: ['websocket'], // Force WebSocket transport
 });
 
 instrument(io, {
   auth: false,
-  mode: "production",
+  namespaceName: '/admin',
+  namespacePath: '/socket.io',
 });
 // Middleware
-app.use(cors());
+app.use(cors(
+  {
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log(`Origin ${origin} is not allowed by CORS`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+  }
+));
 app.use(bodyParser.json());
 
 // Connect MongoDB
