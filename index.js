@@ -24,6 +24,7 @@ const allowedOrigins = [
   "http://localhost:4321",
   "https://cnppromo.vercel.app",
   "https://admin.socket.io", // Add this line
+  "https://www.cnppromo.com"
 ];
 // Set up Socket.IO
 const io = new Server(server, {
