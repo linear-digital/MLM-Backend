@@ -1,11 +1,26 @@
 const cloudinary = require('cloudinary').v2
 const { Router } = require('express');
 const multer = require('multer');
-
+const path = require('path')
 const router = Router()
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
-
+const fs = require('fs')
+const document = multer({
+  limits: { fileSize: 500 * 1024 * 1024 } ,// 500 MB
+  storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+          const destination = path.join("files/",);
+          if (!fs.existsSync(destination)) {
+              fs.mkdirSync(destination);
+          }
+          cb(null, destination);
+      },
+      filename: function (req, file, cb) {
+          cb(null, Date.now() + path.extname(file.originalname));
+      },
+  }),
+});
 cloudinary.config({
     cloud_name: "dtmdt1sfl",
     api_key: "867773931529817",
@@ -42,6 +57,14 @@ router.post('/', upload.single('image'), async (req, res) => {
     }   
 });
 
+router.post('/file', document.single('audio'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+  const url = `https://mlm.genzit.xyz/${req.file.path}`
+
+  res.status(200).send({ message: 'File uploaded successfully', url: url });
+});
 router.get('/all', async (req, res) => {
     try {
         const result = await cloudinary.api.resources({

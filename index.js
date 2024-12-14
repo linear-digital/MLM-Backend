@@ -22,6 +22,7 @@ const port = process.env.PORT || 4000;
 const server = createServer(app);
 const allowedOrigins = [
   "http://localhost:4321",
+  "http://localhost:4000",
   "https://cnppromo.vercel.app",
   "https://admin.socket.io", // Add this line
   "https://www.cnppromo.com"
@@ -153,6 +154,20 @@ app.put("/api/v1/setting", authChecker, async (req, res) => {
 //         });
 //     }
 // });
+const path = require('path')
+
+app.get("/files/:filename", (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, "files", filename);
+
+  // Check if the file exists
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error(err);
+      res.status(404).send("File not found.");
+    }
+  });
+});
 
 const connectedSockets = new Map();
 const sendToSpecificUser = (socketId, data) => {

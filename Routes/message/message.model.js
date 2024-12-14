@@ -22,6 +22,12 @@ const schema = new mongoose.Schema({
     image: {
         type: String
     },
+    audio: {
+        type: String
+    },
+    video: {
+        type: String
+    },
     likes: {
         type: [mongoose.Schema.Types.ObjectId],
     },

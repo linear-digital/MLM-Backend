@@ -1,7 +1,7 @@
 const Chat = require("./chat.model")
 const Message = require("./message.model")
-
-
+const path = require('path')
+const fs = require('fs')
 const createMessage = async (data) => {
     try {
         const newMessage = new Message(data)
@@ -124,10 +124,19 @@ const getMessages = async (query) => {
 
 const deleteMessage = async (id) => {
     try {
-        const data = await Message.findByIdAndDelete(id)
-        if (!data) {
+        const message = await Message.findById(id)
+      
+        if (!message) {
             throw new Error("Message not found")
         }
+        if (message.audio) {
+            const pathF = message.audio.split('xyz/')[1]
+            console.log(pathF);
+            if (fs.existsSync(pathF)) {
+                fs.unlinkSync(pathF)
+            }
+        }
+        const data = await Message.findByIdAndDelete(id)
         return {
             message: "Message deleted successfully"
         }
