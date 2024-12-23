@@ -77,6 +77,16 @@ const deleteMessage = async (req, res) => {
         })
     }
 }
+const markChat = async (req, res) => {
+    try {
+        const result = await messageService.markChat(req.params.id)
+        res.send(result)
+    } catch (error) {
+        res.status(500).send({
+            message: error.message
+        })
+    }
+}
 const messageController = {
     createMessage,
     createNewChat,
@@ -89,6 +99,8 @@ const messageController = {
 
 router.post("/", messageController.createMessage)
 router.post("/chat", messageController.createNewChat)
+router.put("/chat/:id", markChat)
+
 router.get("/chats", messageController.getChats)
 router.get("/user/:id", messageController.chatByUser)
 router.get("/:id", messageController.getAChat)

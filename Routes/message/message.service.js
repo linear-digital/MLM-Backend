@@ -111,7 +111,7 @@ const getMessages = async (query) => {
         const sender = query.sender
         const receiver = query.receiver
         const messages = await Message.find({
-           $or: [
+            $or: [
                 { sender: sender, receiver: receiver },
                 { sender: receiver, receiver: sender },
             ],
@@ -121,14 +121,28 @@ const getMessages = async (query) => {
         throw new Error(error)
     }
 }
-
+const markChat = async (id) => {
+    try {
+        const chat = await Chat.findById(id)
+        if (!chat) {
+            throw new Error("Chat not found")
+        }
+        await Chat.findByIdAndUpdate(chat._id, {
+            marked: !chat.marked
+        })
+        return chat
+    } catch (error) {
+        throw new Error(error)
+    }
+}
 const deleteMessage = async (id) => {
     try {
         const message = await Message.findById(id)
-      
+
         if (!message) {
             throw new Error("Message not found")
         }
+
         if (message.audio) {
             const pathF = message.audio.split('xyz/')[1]
             console.log(pathF);
@@ -151,7 +165,8 @@ const messageService = {
     chatByUser,
     getAChat,
     getMessages,
-    deleteMessage
+    deleteMessage,
+    markChat
 }
 
 module.exports = messageService
