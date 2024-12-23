@@ -110,7 +110,7 @@ router.post('/video', document.single('video'), async (req, res) => {
     ffmpeg(inputPath)
       .output(outputPath)
       .videoCodec('libx264') // Optimized codec
-      .size('50%')
+      .size('720x?')
       .outputOptions('-preset', 'fast') // Fast preset for compression
       .on('end', async () => {
         const inputPath = req.file?.path
