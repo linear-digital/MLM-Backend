@@ -13,7 +13,14 @@ const schema = new mongoose.Schema({
     type: Object,
     required: true
   },
-  path: String
+  type: {
+    type: String,
+    required: true
+  },
+  path: {
+    type: String,
+    required: true
+  }
 }, {
   timestamps: true,
 })
@@ -78,7 +85,8 @@ router.post('/file', document.single('audio'), async (req, res) => {
   const url = `https://mlm.genzit.xyz/${req.file.path}`
   await File.create({
     info: req.file,
-    path: url
+    path: url,
+    type: req.file.fieldname
   })
   res.status(200).send({ message: 'File uploaded successfully', url: url });
 });
@@ -108,11 +116,12 @@ router.post('/video', document.single('video'), async (req, res) => {
         const inputPath = req.file?.path
         fs.unlinkSync(inputPath);
         const url = `https://mlm.genzit.xyz/${outputPath}`;
-        
+
         // Save file info to the database
         await File.create({
           info: req.file,
           path: url,
+          type: req.file.fieldname
         });
 
         // Send the response
