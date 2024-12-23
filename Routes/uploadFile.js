@@ -98,40 +98,16 @@ router.post('/video', document.single('video'), async (req, res) => {
     }
 
     const inputPath = req.file.path;
-    const outputPath = `files/video-${req.file?.originalname}`;
-
     // Ensure the 'optimized' directory exists
-    const optimizedDir = path.dirname(outputPath);
-    if (!fs.existsSync(optimizedDir)) {
-      fs.mkdirSync(optimizedDir);
-    }
+    const url = `https://mlm.genzit.xyz/${inputPath}`;
 
-    // Compress the video using fluent-ffmpeg
-    ffmpeg(inputPath)
-      .output(outputPath)
-      .videoCodec('libx264') // Optimized codec
-      .size('720x?')
-      .outputOptions('-preset', 'fast') // Fast preset for compression
-      .on('end', async () => {
-        const inputPath = req.file?.path
-        fs.unlinkSync(inputPath);
-        const url = `https://mlm.genzit.xyz/${outputPath}`;
-
-        // Save file info to the database
-        await File.create({
-          info: req.file,
-          path: url,
-          type: req.file.fieldname
-        });
-
-        // Send the response
-        res.status(200).send({ message: 'File uploaded and optimized successfully', url });
-      })
-      .on('error', (err) => {
-        console.error('Error optimizing video:', err);
-        res.status(500).send('Failed to optimize video.');
-      })
-      .run();
+    // Save file info to the database
+    await File.create({
+      info: req.file,
+      path: url,
+      type: req.file.fieldname
+    });
+    
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('An error occurred.');
