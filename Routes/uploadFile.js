@@ -98,7 +98,6 @@ router.post('/video', document.single('video'), async (req, res) => {
     }
 
     const inputPath = req.file.path;
-    // Ensure the 'optimized' directory exists
     const url = `https://mlm.genzit.xyz/${inputPath}`;
 
     // Save file info to the database
@@ -107,7 +106,9 @@ router.post('/video', document.single('video'), async (req, res) => {
       path: url,
       type: req.file.fieldname
     });
-    
+
+    // Send the response
+    res.status(200).send({ message: 'File uploaded and optimized successfully', url });
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('An error occurred.');
