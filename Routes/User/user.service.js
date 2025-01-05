@@ -351,15 +351,14 @@ const activeAnUser = async (req, res) => {
         if (user.reffer) {
 
             const refferUser = await User.findById(user.reffer);
-            const refCommission = refferUser.level === 1 ? 30 : refferUser.level === 2 ? 35 : refferUser.level === 3 && 40
+            const refCommission = setting.ref_comm.gen1;
 
             const inGen1 = await createRefer({ user: user._id, reffer: user.reffer, gen: 1, commition: refCommission });
 
             const countRefer = await Refer.countDocuments({ reffer: refferUser._id, gen: 1 });
             // add balance on account of generation1
             await User.findByIdAndUpdate(refferUser._id, {
-                $inc: { balance: refCommission },
-                level: countRefer > 80 ? 2 : countRefer > 160 ? 3 : 1
+                $inc: { balance: refCommission }
             })
             // check 2nd Generation is available ?
             if (refferUser.reffer) {
