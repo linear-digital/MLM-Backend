@@ -11,5 +11,6 @@ router.use('/topup', authChecker, require('./TopUp/topup.controller'))
 router.use('/refer', authChecker, require('./Refer/refer.controller'))
 router.use('/message', authChecker, require('./message/message.controller'))
 router.use('/upload', require('./uploadFile'))
+router.use('/external-withdraw', authChecker, require('./external-withdraw/external.controllar'))
 
 module.exports = router
