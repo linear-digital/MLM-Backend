@@ -176,6 +176,7 @@ const sendToSpecificUser = (socketId, data, funname) => {
     socket2.emit(funname, data);
   }
 };
+
 io.use(async (socket, next) => {
   try {
     const userId = socket.handshake.query.user;
