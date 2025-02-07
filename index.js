@@ -170,12 +170,10 @@ app.get("/files/:filename", (req, res) => {
 });
 
 const connectedSockets = new Map();
-const sendToSpecificUser = (socketId, data) => {
+const sendToSpecificUser = (socketId, data, funname) => {
   if (connectedSockets.has(socketId)) {
     const socket2 = connectedSockets.get(socketId);
-    socket2.emit("message", data);
-  } else {
-    console.log("User not found", socketId);
+    socket2.emit(funname, data);
   }
 };
 io.use(async (socket, next) => {
@@ -221,10 +219,30 @@ io.on("connection", (socket) => {
   socket.on("message", async (data) => {
     const result = await createMessage(data);
 
-    sendToSpecificUser(data.receiver, result);
-    sendToSpecificUser(data.sender, result);
+    sendToSpecificUser(data.receiver, result, "message");
+    sendToSpecificUser(data.sender, result, "message");
   });
 
+  socket.on('seen', async (data) => {
+    const result = await Message.findByIdAndUpdate(data._id, {
+      seen: true
+    }, {
+      new: true
+    })
+    sendToSpecificUser(data.sender, result, "seen");
+  })
+  socket.on('seenOnly', async (id) => {
+    const chat = await Chat.findById(id)
+    if (!chat) {
+      throw new Error("Chat not found")
+    }
+    sendToSpecificUser(chat.owner, {
+      message: "seen"
+    }, "seen")
+    sendToSpecificUser(chat.user, {
+      message: "seen"
+    }, "seen")
+  })
   // Handle disconnections
   socket.on("disconnect", () => {
     statusUpdater(userId, false);

@@ -35,7 +35,6 @@ const getAll = async (status) => {
     try {
         const withDraw = await External.find({ status: status ? status : "pending" })
             .populate("user", "-password")
-            .sort({ createdAt: -1 })
             .exec();
         return withDraw
     } catch (error) {
