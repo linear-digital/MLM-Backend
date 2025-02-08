@@ -72,7 +72,6 @@ const getChats = async () => {
             .populate('owner', 'name username active lastActive')
             .populate('user', 'name username active lastActive')
             .sort({ updatedAt: -1 })
-
         return chats;
     } catch (error) {
         throw new Error(error.message || 'Error fetching chats');
@@ -114,6 +113,23 @@ const getAChat = async (id) => {
         }
 
         return chat
+    } catch (error) {
+        throw new Error(error)
+    }
+}
+
+const getAllMessages = async (query) => {
+    try {
+        const limit = parseInt(query.limit) || 100
+        const page = parseInt(query.page) || 1
+        const skip = (page - 1) * limit;
+        const messages = await Message.find()
+            .populate('sender')
+            .populate('receiver')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+        return messages
     } catch (error) {
         throw new Error(error)
     }
@@ -200,7 +216,8 @@ const messageService = {
     getMessages,
     deleteMessage,
     markChat,
-    seenMessage
+    seenMessage,
+    getAllMessages
 }
 
 module.exports = messageService
