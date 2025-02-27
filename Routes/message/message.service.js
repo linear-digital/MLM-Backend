@@ -19,6 +19,7 @@ const createMessage = async (data) => {
         })
         const message = await Message.findById(result._id)
             .populate('image')
+            .populate('reply')
         return message
 
     } catch (error) {
@@ -126,6 +127,7 @@ const getAllMessages = async (query) => {
         const messages = await Message.find()
             .populate('sender')
             .populate('receiver')
+            .populate('reply')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
@@ -144,7 +146,7 @@ const getMessages = async (query) => {
                 { sender: sender, receiver: receiver },
                 { sender: receiver, receiver: sender },
             ],
-        })
+        }).populate("reply")
         return messages
     } catch (error) {
         throw new Error(error)
@@ -174,7 +176,6 @@ const deleteMessage = async (id) => {
 
         if (message.audio) {
             const pathF = message.audio.split('xyz/')[1]
-            console.log(pathF);
             if (fs.existsSync(pathF)) {
                 fs.unlinkSync(pathF)
             }
