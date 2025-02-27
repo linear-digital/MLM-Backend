@@ -207,6 +207,16 @@ const seenMessage = async (id) => {
         throw new Error(error)
     }
 }
+const updateMessage = async (id, data) => {
+    try {
+        const message = await Message.findByIdAndUpdate(id, data, {
+            new: true
+        })
+        return message
+    } catch (error) {
+        throw new Error(error)
+    }
+}
 const messageService = {
     createMessage,
     createNewChat,
@@ -217,7 +227,8 @@ const messageService = {
     deleteMessage,
     markChat,
     seenMessage,
-    getAllMessages
+    getAllMessages,
+    updateMessage
 }
 
 module.exports = messageService
