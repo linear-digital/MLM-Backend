@@ -17,7 +17,7 @@ require("dotenv").config();
 const { instrument } = require("@socket.io/admin-ui");
 const app = express();
 const port = process.env.PORT || 4000;
-
+require("./tracing");
 // Create HTTP server for Socket.IO
 const server = createServer(app);
 const allowedOrigins = [
@@ -25,8 +25,11 @@ const allowedOrigins = [
   "http://localhost:4000",
   "https://cnppromo.vercel.app",
   "https://admin.socket.io", // Add this line
-  "https://www.cnppromo.com"
+  "https://www.cnppromo.com",
+  "https://cnppromo.com",
+  "https://cnppromo-ba4cdajay-tamizs-projects.vercel.app"
 ];
+const redirectUrl = "https://cnppromo.com";
 // Set up Socket.IO
 const io = new Server(server, {
   cors: {
@@ -38,7 +41,8 @@ const io = new Server(server, {
         callback(new Error("Not allowed by CORS"));
       }
     },
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+    methods: ["GET", "POST"],
   },
   transports: ['websocket'], // Force WebSocket transport
 });
@@ -48,19 +52,44 @@ instrument(io, {
   namespaceName: '/admin',
   namespacePath: '/socket.io',
 });
-// Middleware
-app.use(cors(
-  {
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.log(`Origin ${origin} is not allowed by CORS`);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`Blocked by CORS: ${origin}`);
+      callback(null, false); // Prevents a crash
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+};
+
+app.use(cors(corsOptions));
+
+// ✅ Middleware to Redirect Unauthorized Origins
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (origin && !allowedOrigins.includes(origin)) {
+    console.warn(`Redirecting unauthorized origin: ${origin}`);
+    // Redirect only for normal browser requests (not for API fetches)
+    if (!req.xhr && req.accepts("html")) {
+      return res.redirect(307, redirectUrl); // Temporary redirect
+    } else {
+      return res.status(403).json({ error: "CORS Policy Blocked This Request" });
+    }
   }
-));
+
+  next();
+});
+
+// ✅ Global Error Handler (Prevents Crashes)
+app.use((err, req, res, next) => {
+  console.error("Unhandled Error:", err.stack || err.message);
+  res.status(500).json({ error: "Internal Server Error" });
+});
+
 app.use(bodyParser.json());
 
 // Connect MongoDB
@@ -129,30 +158,30 @@ app.put("/api/v1/setting", authChecker, async (req, res) => {
 });
 
 // app.get('/update', async (req, res) => {
-//     try {
-//         const users = await User.find(); // Get all user documents
-//         const totalUsers = users.length;
-
-//         const result = await Promise.all(
-//             users.map(async (user, index) => {
-//                 const countRefer = await Refer.countDocuments({ reffer: user._id, gen: 1 });
-//                 const level = countRefer > 160 ? 3 : countRefer > 40 ? 2 : 1;
-
-//                 await User.findByIdAndUpdate(user._id, { level }, { new: true });
-//                 return `${index + 1}/${totalUsers}`;
-//             })
-//         );
-
-//         res.send({
-//             message: `Updated ${result.length} users successfully.`,
-//             details: result,
-//         });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).send({
-//             message: error.message,
-//         });
-//     }
+//   try {
+//     const result = await Message.updateMany(
+//       { image: { $regex: "^https://mlm.genzit.xyz" } }, // Find messages with the old URL
+//       [
+//         {
+//           $set: {
+//             image: {
+//               $replaceOne: {
+//                 input: "$image",
+//                 find: "https://mlm.genzit.xyz",
+//                 replacement: "https://server.cnppromo.com"
+//               }
+//             }
+//           }
+//         }
+//       ]
+//     );
+//     res.send(result);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send({
+//       message: error.message,
+//     });
+//   }
 // });
 const path = require('path')
 

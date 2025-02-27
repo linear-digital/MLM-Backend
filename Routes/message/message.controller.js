@@ -108,6 +108,7 @@ const getAllMessages = async (req, res) => {
         })
     }
 }
+
 const messageController = {
     createMessage,
     createNewChat,
@@ -129,7 +130,7 @@ router.get("/chats", messageController.getChats)
 router.get("/user/:id", messageController.chatByUser)
 router.get("/:id", messageController.getAChat)
 router.get("/msg/all", messageController.getMessages)
-router.get("/all.msg", getAllMessages)
+router.get("/all/msg", getAllMessages)
 router.delete("/:id", messageController.deleteMessage)
 
 
