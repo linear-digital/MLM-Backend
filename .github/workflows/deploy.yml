@@ -7,7 +7,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Deploy using SSH
       - name: Deploy
         uses: appleboy/ssh-action@v0.1.10
         with:
@@ -25,18 +24,22 @@ jobs:
               sudo apt-get install -y nodejs
             fi
 
-            # Install pnpm if not already installed
+            # Ensure npm is available
+            export PATH=$PATH:/usr/local/bin
+
+            # Install pnpm using corepack
             if ! command -v pnpm &> /dev/null; then
               echo "Installing pnpm..."
-              npm install -g pnpm
+              corepack enable
+              corepack prepare pnpm@latest --activate
             fi
 
-            # Install PM2 if not already installed
+            # Install PM2
             if ! command -v pm2 &> /dev/null; then
               echo "Installing PM2..."
-              npm install -g pm2
+              npx pm2 install pm2 -g
             fi
 
-            # Install dependencies, build, and restart the application
+            # Install dependencies and restart app
             pnpm i
             pm2 restart 0 --update-env
