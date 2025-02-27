@@ -78,7 +78,6 @@ app.use((req, res, next) => {
       return res.status(403).json({ error: "CORS Policy Blocked This Request" });
     }
   }
-
   next();
 });
 
