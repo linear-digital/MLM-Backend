@@ -14,7 +14,7 @@ const createWithDraw = async (data) => {
         if (!userData) {
             throw new Error("User not found")
         }
-        if (amount <= 200 || amount > 600) {
+        if (amount < 200 || amount > 600) {
             throw new Error("Withdraw amount must be greater than 200 and less than or equal to 600");
         }
         if (amount > userData.balance) {

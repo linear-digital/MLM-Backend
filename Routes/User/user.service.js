@@ -351,7 +351,7 @@ const activeAnUser = async (req, res) => {
         if (user.reffer) {
 
             const refferUser = await User.findById(user.reffer);
-            const refCommission = setting.ref_comm.gen1;
+            const refCommission = refferUser?.username === "albirarahman" ? 35 :  setting.ref_comm.gen1;
 
             const inGen1 = await createRefer({ user: user._id, reffer: user.reffer, gen: 1, commition: refCommission });
 

@@ -38,7 +38,7 @@ router.get("/:id", async (req, res) => {
 
 router.get("/user/:id", async (req, res) => {
     try {
-        const response = await externalWithdrawServices.getAllRefer(req.params.id, req.query?.status);
+        const response = await externalWithdrawServices.getAllByUser(req.params.id, req.query?.status);
         res.send(response);
     } catch (error) {
         res.status(500).send({

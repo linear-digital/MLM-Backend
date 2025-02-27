@@ -25,22 +25,24 @@ const allowedOrigins = [
   "http://localhost:4000",
   "https://cnppromo.vercel.app",
   "https://admin.socket.io", // Add this line
-  "https://www.cnppromo.com"
+  "https://www.cnppromo.com",
+  "https://cnppromo.com",
+  "https://cnppromo-ba4cdajay-tamizs-projects.vercel.app"
 ];
+const redirectUrl = "https://cnppromo.com";
 // Set up Socket.IO
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
       if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
+        callback(null, true); // ✅ Allow access
       } else {
-        console.log(`Origin ${origin} is not allowed by CORS`);
-        callback(new Error("Not allowed by CORS"));
+        callback(new Error("Not allowed by CORS")); // ❌ Reject request
       }
     },
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
-  transports: ['websocket'], // Force WebSocket transport
+  transports: ["websocket"], // Force WebSocket transport
 });
 
 instrument(io, {
@@ -48,19 +50,43 @@ instrument(io, {
   namespaceName: '/admin',
   namespacePath: '/socket.io',
 });
-// Middleware
-app.use(cors(
-  {
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.log(`Origin ${origin} is not allowed by CORS`);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`Blocked by CORS: ${origin}`);
+      callback(null, false); // Prevents a crash
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+};
+
+app.use(cors(corsOptions));
+
+// ✅ Middleware to Redirect Unauthorized Origins
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (origin && !allowedOrigins.includes(origin)) {
+
+    // Redirect only for normal browser requests (not for API fetches)
+    if (!req.xhr && req.accepts("html")) {
+      return res.redirect(307, redirectUrl); // Temporary redirect
+    } else {
+      return res.status(403).json({ error: "CORS Policy Blocked This Request" });
+    }
   }
-));
+
+  next();
+});
+
+// ✅ Global Error Handler (Prevents Crashes)
+app.use((err, req, res, next) => {
+  res.status(500).json({ error: "Internal Server Error" });
+});
+
 app.use(bodyParser.json());
 
 // Connect MongoDB
@@ -163,21 +189,19 @@ app.get("/files/:filename", (req, res) => {
   // Check if the file exists
   res.sendFile(filePath, (err) => {
     if (err) {
-      console.error(err);
       res.status(404).send("File not found.");
     }
   });
 });
 
 const connectedSockets = new Map();
-const sendToSpecificUser = (socketId, data) => {
+const sendToSpecificUser = (socketId, data, funname) => {
   if (connectedSockets.has(socketId)) {
     const socket2 = connectedSockets.get(socketId);
-    socket2.emit("message", data);
-  } else {
-    console.log("User not found", socketId);
+    socket2.emit(funname, data);
   }
 };
+
 io.use(async (socket, next) => {
   try {
     const userId = socket.handshake.query.user;
@@ -221,10 +245,30 @@ io.on("connection", (socket) => {
   socket.on("message", async (data) => {
     const result = await createMessage(data);
 
-    sendToSpecificUser(data.receiver, result);
-    sendToSpecificUser(data.sender, result);
+    sendToSpecificUser(data.receiver, result, "message");
+    sendToSpecificUser(data.sender, result, "message");
   });
 
+  socket.on('seen', async (data) => {
+    const result = await Message.findByIdAndUpdate(data._id, {
+      seen: true
+    }, {
+      new: true
+    })
+    sendToSpecificUser(data.sender, result, "seen");
+  })
+  socket.on('seenOnly', async (id) => {
+    const chat = await Chat.findById(id)
+    if (!chat) {
+      throw new Error("Chat not found")
+    }
+    sendToSpecificUser(chat.owner, {
+      message: "seen"
+    }, "seen")
+    sendToSpecificUser(chat.user, {
+      message: "seen"
+    }, "seen")
+  })
   // Handle disconnections
   socket.on("disconnect", () => {
     statusUpdater(userId, false);

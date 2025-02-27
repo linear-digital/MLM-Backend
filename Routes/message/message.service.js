@@ -4,7 +4,10 @@ const path = require('path')
 const fs = require('fs')
 const createMessage = async (data) => {
     try {
-        const newMessage = new Message(data)
+        const newMessage = new Message({
+            ...data,
+            seen: false
+        })
         const result = await newMessage.save()
         await Chat.updateMany({
             $or: [
@@ -69,7 +72,6 @@ const getChats = async () => {
             .populate('owner', 'name username active lastActive')
             .populate('user', 'name username active lastActive')
             .sort({ updatedAt: -1 })
-
         return chats;
     } catch (error) {
         throw new Error(error.message || 'Error fetching chats');
@@ -78,14 +80,24 @@ const getChats = async () => {
 
 const chatByUser = async (id) => {
     try {
-
         // Fetch chats without population
         const chats = await Chat.find({ owner: id })
             .populate('owner', 'name username active lastActive')
             .populate('user', 'name username active lastActive')
             .populate('message')
             .sort({ updatedAt: -1 })
-        return chats;
+        const unseenMessages = await Promise.all(chats.map(async (chat) => {
+            const messages = await Message.countDocuments({
+                receiver: chat.owner._id,
+                sender: chat.user._id,
+                seen: { $in: [false, null] }
+            })
+            return {
+                ...chat._doc,
+                unseen: messages
+            }
+        }))
+        return unseenMessages;
     } catch (error) {
         throw new Error(error.message || 'Error fetching chats');
     }
@@ -101,6 +113,23 @@ const getAChat = async (id) => {
         }
 
         return chat
+    } catch (error) {
+        throw new Error(error)
+    }
+}
+
+const getAllMessages = async (query) => {
+    try {
+        const limit = parseInt(query.limit) || 100
+        const page = parseInt(query.page) || 1
+        const skip = (page - 1) * limit;
+        const messages = await Message.find()
+            .populate('sender')
+            .populate('receiver')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+        return messages
     } catch (error) {
         throw new Error(error)
     }
@@ -158,6 +187,26 @@ const deleteMessage = async (id) => {
         throw new Error(error)
     }
 }
+const seenMessage = async (id) => {
+    try {
+        const chat = await Chat.findById(id)
+        if (!chat) {
+            throw new Error("Chat not found")
+        }
+        const seen = await Message.updateMany({
+            receiver: chat.owner,
+            sender: chat.user,
+            seen: { $in: [false, null] }
+        }, {
+            seen: true
+        }, {
+            new: true
+        })
+        return seen
+    } catch (error) {
+        throw new Error(error)
+    }
+}
 const messageService = {
     createMessage,
     createNewChat,
@@ -166,7 +215,9 @@ const messageService = {
     getAChat,
     getMessages,
     deleteMessage,
-    markChat
+    markChat,
+    seenMessage,
+    getAllMessages
 }
 
 module.exports = messageService
