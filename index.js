@@ -189,13 +189,45 @@ app.get("/files/:filename", (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(__dirname, "files", filename);
 
-  // Check if the file exists
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error(err);
-      res.status(404).send("File not found.");
+  // Check if file exists
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send("File not found.");
+  }
+
+  const stat = fs.statSync(filePath);
+  const fileSize = stat.size;
+  const range = req.headers.range;
+
+  if (range) {
+    // Parse range header
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+    if (start >= fileSize || end >= fileSize) {
+      return res.status(416).send("Requested range not satisfiable.");
     }
-  });
+
+    const chunkSize = end - start + 1;
+    const fileStream = fs.createReadStream(filePath, { start, end });
+
+    res.writeHead(206, {
+      "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+      "Accept-Ranges": "bytes",
+      "Content-Length": chunkSize,
+      "Content-Type": "video/mp4",
+    });
+
+    fileStream.pipe(res);
+  } else {
+    // Serve full video if no range request
+    res.writeHead(200, {
+      "Content-Length": fileSize,
+      "Content-Type": "video/mp4",
+    });
+
+    fs.createReadStream(filePath).pipe(res);
+  }
 });
 
 const connectedSockets = new Map();
