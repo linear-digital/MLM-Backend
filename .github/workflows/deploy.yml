@@ -17,7 +17,7 @@ jobs:
             cd /home/cnppromo-server/htdocs/server.cnppromo.com
             git pull
 
-            # Install Node.js if not already installed
+            # Ensure Node.js is installed
             if ! command -v node &> /dev/null; then
               echo "Installing Node.js..."
               curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
@@ -26,20 +26,24 @@ jobs:
 
             # Ensure npm is available
             export PATH=$PATH:/usr/local/bin
+            source ~/.bashrc
 
-            # Install pnpm using corepack
+            # Recheck Node.js installation
+            node -v
+            npm -v
+
+            # Install pnpm globally
             if ! command -v pnpm &> /dev/null; then
               echo "Installing pnpm..."
-              corepack enable
-              corepack prepare pnpm@latest --activate
+              npm install -g pnpm
             fi
 
-            # Install PM2
+            # Install PM2 globally
             if ! command -v pm2 &> /dev/null; then
               echo "Installing PM2..."
-              npx pm2 install pm2 -g
+              npm install -g pm2
             fi
 
-            # Install dependencies and restart app
-            pnpm i
+            # Install dependencies and restart the application
+            pnpm install
             pm2 restart 0 --update-env
