@@ -82,7 +82,7 @@ router.post('/file', document.single('audio'), async (req, res) => {
   if (!req.file) {
     return res.status(400).send('No file uploaded.');
   }
-  const url = `https://mlm.genzit.xyz/${req.file.path}`
+  const url = `https://server.cnppromo.com/${req.file.path}`
   await File.create({
     info: req.file,
     path: url,
@@ -98,7 +98,7 @@ router.post('/video', document.single('video'), async (req, res) => {
     }
 
     const inputPath = req.file.path;
-    const url = `https://mlm.genzit.xyz/${inputPath}`;
+    const url = `https://server.cnppromo.com/${inputPath}`;
 
     // Save file info to the database
     await File.create({
