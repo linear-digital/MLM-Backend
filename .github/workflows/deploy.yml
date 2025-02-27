@@ -24,13 +24,23 @@ jobs:
               sudo apt-get install -y nodejs
             fi
 
-            # Ensure npm is available
-            export PATH=$PATH:/usr/local/bin
-            source ~/.bashrc
+            # Ensure npm is installed
+            if ! command -v npm &> /dev/null; then
+              echo "Installing npm..."
+              curl -L https://www.npmjs.com/install.sh | sudo bash
+            fi
 
-            # Recheck Node.js installation
+            # Ensure correct PATH for npm & node
+            export PATH=$PATH:/usr/local/bin:/usr/bin:/home/$USER/.npm-global/bin
+            source ~/.bashrc
+            source ~/.profile
+
+            # Verify installations
             node -v
             npm -v
+
+            # Enable Corepack (for pnpm)
+            corepack enable
 
             # Install pnpm globally
             if ! command -v pnpm &> /dev/null; then
