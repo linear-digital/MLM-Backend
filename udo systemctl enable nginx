@@ -1,0 +1,20 @@
+[0;1;32m●[0m nginx.service - LSB: starts the nginx web server
+     Loaded: loaded (/etc/init.d/nginx; generated)
+     Active: [0;1;32mactive (running)[0m since Mon 2025-02-24 10:01:00 +06; 14s ago
+       Docs: man:systemd-sysv-generator(8)
+    Process: 3111987 ExecStart=/etc/init.d/nginx start (code=exited, status=0/SUCCESS)
+      Tasks: 5 (limit: 2266)
+     Memory: 59.6M
+        CPU: 106ms
+     CGroup: /system.slice/nginx.service
+             ├─3111992 "nginx: master process /www/server/nginx/sbin/nginx -c /www/server/nginx/conf/nginx.conf"
+             ├─3111993 "nginx: worker process" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+             ├─3111994 "nginx: worker process" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+             ├─3111995 "nginx: cache manager process" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+             └─3111996 "nginx: cache loader process" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+
+Feb 24 10:01:00 hosting.lineardigital.co systemd[1]: Starting LSB: starts the nginx web server...
+Feb 24 10:01:00 hosting.lineardigital.co nginx[3111987]: Starting nginx...
+Feb 24 10:01:00 hosting.lineardigital.co nginx[3111991]: nginx: [warn] protocol options redefined for 0.0.0.0:443 in /www/server/panel/vhost/nginx/node_mlmgenzit.conf:4
+Feb 24 10:01:00 hosting.lineardigital.co nginx[3111987]:  done
+Feb 24 10:01:00 hosting.lineardigital.co systemd[1]: Started LSB: starts the nginx web server.
