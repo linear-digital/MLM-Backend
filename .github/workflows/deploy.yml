@@ -1,0 +1,42 @@
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Deploy using SSH
+      - name: Deploy
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd /home/cnppromo-server/htdocs/server.cnppromo.com
+            git pull
+
+            # Install Node.js if not already installed
+            if ! command -v node &> /dev/null; then
+              echo "Installing Node.js..."
+              curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+            fi
+
+            # Install pnpm if not already installed
+            if ! command -v pnpm &> /dev/null; then
+              echo "Installing pnpm..."
+              npm install -g pnpm
+            fi
+
+            # Install PM2 if not already installed
+            if ! command -v pm2 &> /dev/null; then
+              echo "Installing PM2..."
+              npm install -g pm2
+            fi
+
+            # Install dependencies, build, and restart the application
+            pnpm i
+            pm2 restart 0 --update-env
