@@ -127,8 +127,8 @@ const getAllMessages = async (query) => {
         const filter = {}
         if (query.user) {
             filter.$or = [
-                { sender: query.user, receiver: query.receiver },
-                { sender: query.receiver, receiver: query.user },
+                { sender: query.user, receiver: query.user },
+                { sender: query.user, receiver: query.user },
             ]
         }
         const messages = await Message.find(filter)
