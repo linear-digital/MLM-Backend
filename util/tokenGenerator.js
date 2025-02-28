@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-const secret = process.env.JWT_SECRET || "default_secret"; // Ensure a fallback secret
+const secret = "Veryverysecret1574349"; // Ensure a fallback secret
 
 const tokenGenerator = (user) => {
     try {
