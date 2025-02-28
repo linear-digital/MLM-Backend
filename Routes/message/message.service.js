@@ -141,12 +141,17 @@ const getMessages = async (query) => {
     try {
         const sender = query.sender
         const receiver = query.receiver
-        const messages = await Message.find({
+        const filter = {
             $or: [
                 { sender: sender, receiver: receiver },
                 { sender: receiver, receiver: sender },
-            ],
-        }).populate("reply")
+            ]
+        }
+        if (query.user) {
+            filter.sender = query.user
+            filter.receiver = query.user
+        }
+        const messages = await Message.find(filter).populate("reply")
         return messages
     } catch (error) {
         throw new Error(error)
