@@ -125,11 +125,12 @@ const getAllMessages = async (query) => {
         const page = parseInt(query.page) || 1
         const skip = (page - 1) * limit;
         const filter = {}
+
         if (query.user) {
             filter.$or = [
-                { sender: query.user, receiver: query.user },
-                { sender: query.user, receiver: query.user },
-            ]
+                { sender: query.user },
+                { receiver: query.user }
+            ];
         }
         const messages = await Message.find(filter)
             .populate('sender')
