@@ -81,28 +81,34 @@ const getChats = async () => {
 
 const chatByUser = async (id) => {
     try {
-        // Fetch chats without population
+        // Fetch chats with population
         const chats = await Chat.find({ owner: id })
             .populate('owner', 'name username active lastActive')
             .populate('user', 'name username active lastActive')
             .populate('message')
-            .sort({ updatedAt: -1 })
-        const unseenMessages = await Promise.all(chats.map(async (chat) => {
+            .sort({ updatedAt: -1 });
+
+        // Filter out any chats where owner or user is missing
+        const validChats = chats.filter(chat => chat.owner && chat.user);
+
+        const unseenMessages = await Promise.all(validChats.map(async (chat) => {
             const messages = await Message.countDocuments({
-                receiver: chat.owner._id,
-                sender: chat.user._id,
+                receiver: chat.owner?._id,
+                sender: chat.user?._id,
                 seen: { $in: [false, null] }
-            })
+            });
+
             return {
                 ...chat._doc,
                 unseen: messages
-            }
-        }))
+            };
+        }));
+
         return unseenMessages;
     } catch (error) {
         throw new Error(error.message || 'Error fetching chats');
     }
-}
+};
 const getAChat = async (id) => {
     try {
 
