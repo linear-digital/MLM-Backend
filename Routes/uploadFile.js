@@ -131,7 +131,7 @@ router.get('/files', async (req, res) => {
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }
-        await File.findByIdAndDelete(file._id);
+        // await File.findByIdAndDelete(file._id);
         return {
           message: 'File deleted successfully',
           success: true
