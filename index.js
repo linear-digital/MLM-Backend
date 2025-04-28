@@ -16,6 +16,7 @@ const Refer = require("./Routes/Refer/refer.model");
 require("dotenv").config();
 const { instrument } = require("@socket.io/admin-ui");
 const app = express();
+const morgan = require("morgan");
 const port = process.env.PORT || 4000;
 require("./tracing");
 // Create HTTP server for Socket.IO
@@ -66,7 +67,10 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
+app.use(morgan("dev"));
+app.use(express.json());
+// Middleware to parse URL-encoded data
+app.use(express.urlencoded({ extended: true }));
 // ✅ Middleware to Redirect Unauthorized Origins
 app.use((req, res, next) => {
   const origin = req.headers.origin;
@@ -90,7 +94,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-app.use(bodyParser.json());
 
 // Connect MongoDB
 connectDB();
