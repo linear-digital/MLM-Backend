@@ -43,6 +43,7 @@ const chatByUser = async (req, res) => {
         const skip = (page - 1) * limit
         const data = {
             limit: parseInt(limit),
+            page: parseInt(page),
             skip: parseInt(skip)
         }
         const result = await messageService.chatByUser(req.params.id, data)

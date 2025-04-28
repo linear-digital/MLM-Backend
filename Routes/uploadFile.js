@@ -120,7 +120,8 @@ router.get('/files', async (req, res) => {
     const files = await File.find({
       createdAt: {
         $lt: new Date(Date.now() - 60 * 60 * 24 * 1000 * 60)
-      }
+      },
+      type: 'audio'
     });
     const result = Promise.all(files.map(async (file) => {
       const filePath = path.join(__dirname, "../", file.path);
