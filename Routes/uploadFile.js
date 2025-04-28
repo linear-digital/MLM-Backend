@@ -114,6 +114,46 @@ router.post('/video', document.single('video'), async (req, res) => {
     res.status(500).send('An error occurred.');
   }
 });
+// get files thats are created before 2 months
+router.get('/files', async (req, res) => {
+  try {
+    const files = await File.find({
+      createdAt: {
+        $lt: new Date(Date.now() - 60 * 60 * 24 * 1000 * 60)
+      }
+    });
+    const result = Promise.all(files.map(async (file) => {
+      const filePath = path.join(__dirname, "../", file.path);
+      // file path exists
+      const isExists = fs.existsSync(filePath);
+      if (isExists) {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+        await File.findByIdAndDelete(file._id);
+        return {
+          message: 'File deleted successfully',
+          success: true
+        }
+      } else {
+        return {
+          message: 'File not found',
+          success: false
+        }
+      }
+    }))
+    res.status(200).send({
+      message: 'Files deleted successfully',
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    res.status(500).send({
+      message: error.message,
+      success: false
+    })
+  }
+})
 router.get('/all', async (req, res) => {
   try {
     const result = await cloudinary.api.resources({

@@ -79,13 +79,16 @@ const getChats = async () => {
     }
 };
 
-const chatByUser = async (id) => {
+const chatByUser = async (id, data) => {
     try {
+
         // Fetch chats with population
         const chats = await Chat.find({ owner: id })
             .populate('owner', 'name username active lastActive')
             .populate('user', 'name username active lastActive')
             .populate('message')
+            .skip(data.skip)
+            .limit(data.limit)
             .sort({ updatedAt: -1 });
 
         // Filter out any chats where owner or user is missing
@@ -155,13 +158,19 @@ const getMessages = async (query) => {
     try {
         const sender = query.sender
         const receiver = query.receiver
+        const limit = parseInt(query.limit) || 100
+        const page = parseInt(query.page) || 1
+        const skip = (page - 1) * limit;
         const filter = {
             $or: [
                 { sender: sender, receiver: receiver },
                 { sender: receiver, receiver: sender },
             ]
         }
-        const messages = await Message.find(filter).populate("reply")
+        const messages = await Message.find(filter)
+            .populate("reply")
+            .skip(skip)
+            .limit(limit)
         return messages
     } catch (error) {
         throw new Error(error)

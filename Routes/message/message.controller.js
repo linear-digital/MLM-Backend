@@ -38,7 +38,14 @@ const getChats = async (req, res) => {
 }
 const chatByUser = async (req, res) => {
     try {
-        const result = await messageService.chatByUser(req.params.id)
+        const limit = req.query.limit || 100
+        const page = req.query.page || 1
+        const skip = (page - 1) * limit
+        const data = {
+            limit: parseInt(limit),
+            skip: parseInt(skip)
+        }
+        const result = await messageService.chatByUser(req.params.id, data)
         res.send(result)
     } catch (error) {
         res.status(500).send({
