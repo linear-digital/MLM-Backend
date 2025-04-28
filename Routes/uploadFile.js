@@ -123,8 +123,8 @@ router.get('/files', async (req, res) => {
       },
       type: 'audio'
     });
-    const result = Promise.all(files.map(async (file) => {
-      const filePath = path.join(__dirname, "../", file.path);
+    const result = await Promise.all(files.map(async (file) => {
+      const filePath = path.join(__dirname, file.info.path);
       // file path exists
       const isExists = fs.existsSync(filePath);
       if (isExists) {
