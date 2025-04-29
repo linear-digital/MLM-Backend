@@ -141,7 +141,7 @@ const getChats = async () => {
 //     }
 // };
 
-const chatByUser  = async (id) => {
+const chatByUser = async (id) => {
     try {
         // Fetch chats with population
         const chats = await Chat.find({ owner: id })
@@ -161,7 +161,6 @@ const chatByUser  = async (id) => {
             {
                 $match: {
                     receiver: { $in: ownerId },
-                    sender: { $in: userIds },
                     seen: { $in: [false, null] }
                 }
             },
@@ -172,7 +171,6 @@ const chatByUser  = async (id) => {
                 }
             }
         ]);
-
         // Create a map for quick lookup of unseen message counts
         const unseenMap = unseenCounts.reduce((acc, { _id, count }) => {
             acc[`${_id.receiver}-${_id.sender}`] = count;
@@ -187,12 +185,34 @@ const chatByUser  = async (id) => {
                 unseen: unseenMap[key] || 0
             };
         });
-
         return unseenMessages;
     } catch (error) {
         throw new Error(error.message || 'Error fetching chats');
     }
 };
+const searchMessages = async (query) => {
+    try {
+        const { user, text } = query;
+
+        const result = await Message.find({
+            $or: [
+                { sender: user },
+                { receiver: user }
+            ],
+            message: { $regex: text, $options: 'i' }
+        }).populate('sender', 'name username active lastActive')
+            .populate('receiver', 'name username active lastActive')
+
+        return {
+            total: result.length,
+            messages: result
+        };
+    } catch (error) {
+        console.error("Error in searchMessages:", error);
+        throw error; // Preserves stack trace
+    }
+}
+
 const getAChat = async (id) => {
     try {
 
@@ -334,7 +354,8 @@ const messageService = {
     markChat,
     seenMessage,
     getAllMessages,
-    updateMessage
+    updateMessage,
+    searchMessages
 }
 
 module.exports = messageService

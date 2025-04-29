@@ -75,6 +75,16 @@ const getMessages = async (req, res) => {
         })
     }
 }
+const searchMessages = async (req, res) => {
+    try {
+        const result = await messageService.searchMessages(req.query)
+        res.send(result)
+    } catch (error) {
+        res.status(500).send({
+            message: error.message
+        })
+    }
+}
 const deleteMessage = async (req, res) => {
     try {
         const result = await messageService.deleteMessage(req.params.id)
@@ -149,6 +159,7 @@ router.get("/chats", messageController.getChats)
 router.get("/user/:id", messageController.chatByUser)
 router.get("/:id", messageController.getAChat)
 router.get("/msg/all", messageController.getMessages)
+router.get("/msg/search", searchMessages)
 router.get("/all/msg", getAllMessages)
 router.delete("/:id", messageController.deleteMessage)
 
