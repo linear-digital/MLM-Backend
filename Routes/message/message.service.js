@@ -270,9 +270,6 @@ const getMessages = async (query) => {
         }
         const messages = await Message.find(filter)
             .populate("reply")
-            .skip(skip)
-            .limit(limit)
-            .sort({ createdAt: -1 })
         return messages
     } catch (error) {
         throw new Error(error)
