@@ -259,7 +259,7 @@ const getMessages = async (query) => {
     try {
         const sender = query.sender
         const receiver = query.receiver
-        const limit = parseInt(query.limit) || 100
+        const limit = parseInt(query.limit) || 200
         const page = parseInt(query.page) || 1
         const skip = (page - 1) * limit;
         const filter = {
@@ -272,6 +272,7 @@ const getMessages = async (query) => {
             .populate("reply")
             .skip(skip)
             .limit(limit)
+            .sort({ createdAt: -1 })
         return messages
     } catch (error) {
         throw new Error(error)
