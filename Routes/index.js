@@ -12,5 +12,6 @@ router.use('/refer', authChecker, require('./Refer/refer.controller'))
 router.use('/message', require('./message/message.controller'))
 router.use('/upload', require('./uploadFile'))
 router.use('/external-withdraw', authChecker, require('./external-withdraw/external.controllar'))
+router.use("/social-works", authChecker, require("./social-works/work.controller"));
 
 module.exports = router
