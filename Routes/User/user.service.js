@@ -9,18 +9,14 @@ const User = require("./user.model");
 const bcrypt = require("bcrypt");
 const mailerService = require("../mailer/mailer");
 const Refer = require("../Refer/refer.model");
-const createUser = async (req, res) => {
+const createUser = async (req, res) =>
+{
     try {
+        req.body.email = req.body.email.toLowerCase();
         const isExist = await User.findOne({ email: req.body.email, username: req.body.username });
         if (isExist) {
             return res.status(400).send({
                 message: "User already exist"
-            });
-        }
-        const trxIsvalid = await User.findOne({ trx: req.body.trx });
-        if (trxIsvalid) {
-            return res.status(400).send({
-                message: "Trx already exist"
             });
         }
         if (req.body.reffer !== "") {
@@ -60,8 +56,10 @@ const createUser = async (req, res) => {
     }
 }
 
-const loginUser = async (req, res) => {
+const loginUser = async (req, res) =>
+{
     try {
+        req.body.email = req.body.email.toLowerCase();
         const user = await User.findOne({
             $or: [
                 {
@@ -96,8 +94,10 @@ const loginUser = async (req, res) => {
 }
 
 
-const withoutPass = async (req, res) => {
+const withoutPass = async (req, res) =>
+{
     try {
+        req.query.email = req.query.email.toLowerCase();
         const user = await User.findOne({
             $or: [
                 {
@@ -124,7 +124,8 @@ const withoutPass = async (req, res) => {
         });
     }
 }
-const getAllData = async (req, res) => {
+const getAllData = async (req, res) =>
+{
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
@@ -192,7 +193,8 @@ const getAllData = async (req, res) => {
         });
     }
 }
-const getSingle = async (req, res) => {
+const getSingle = async (req, res) =>
+{
     try {
         const user = await User.findById(req.params.id)
             .select("-password")
@@ -207,7 +209,8 @@ const getSingle = async (req, res) => {
         });
     }
 }
-const searchUser = async (req, res) => {
+const searchUser = async (req, res) =>
+{
     try {
         const user = await User.findOne({ username: req.params.id })
             .select("-password")
@@ -226,7 +229,8 @@ const searchUser = async (req, res) => {
         });
     }
 }
-const updateUser = async (req, res) => {
+const updateUser = async (req, res) =>
+{
     try {
         const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!user) {
@@ -242,7 +246,8 @@ const updateUser = async (req, res) => {
         });
     }
 }
-const updatePassword = async (req, res) => {
+const updatePassword = async (req, res) =>
+{
     try {
         const user = await User.findById(req.params.id);
         if (!user) {
@@ -271,7 +276,8 @@ const updatePassword = async (req, res) => {
         });
     }
 }
-const password = async (req, res) => {
+const password = async (req, res) =>
+{
     try {
         const newPassword = await saltGenerator(req.body.password);
         const user = await User.findByIdAndUpdate(req.params.id, { password: newPassword });
@@ -289,7 +295,8 @@ const password = async (req, res) => {
         });
     }
 }
-const deleteUser = async (req, res) => {
+const deleteUser = async (req, res) =>
+{
     if (req.user.role !== "admin") {
         return res.status(400).send({
             message: "You are not authorized to access this route"
@@ -307,10 +314,12 @@ const deleteUser = async (req, res) => {
     }
 }
 
-const getCurrentUser = async (req, res) => {
+const getCurrentUser = async (req, res) =>
+{
     res.send(req.user);
 }
-const checkUser = async (req, res) => {
+const checkUser = async (req, res) =>
+{
     try {
 
         const user = await User.findOne({ username: req.params.id });
@@ -332,7 +341,8 @@ const checkUser = async (req, res) => {
         });
     }
 }
-const activeAnUser = async (req, res) => {
+const activeAnUser = async (req, res) =>
+{
     if (req.user.role !== "admin") {
         return res.status(400).send({
             message: "You are not authorized to access this route"
@@ -428,7 +438,8 @@ const activeAnUser = async (req, res) => {
         });
     }
 }
-const getStatistic = async (req, res) => {
+const getStatistic = async (req, res) =>
+{
     try {
         const total = User.countDocuments();
         const active = User.countDocuments({ status: "active" });
@@ -448,7 +459,8 @@ const getStatistic = async (req, res) => {
         });
     }
 }
-const resetPassword = async (req, res) => {
+const resetPassword = async (req, res) =>
+{
     try {
         const text = req.params.id;
         const user = await User.findOne({
