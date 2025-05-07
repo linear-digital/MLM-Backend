@@ -124,6 +124,10 @@ const updateWorkSubmit = async (workSubmitId, workSubmitData) =>
 const deleteWork = async (workId) =>
 {
     try {
+        const isAnySubmitExist = WorkSubmit.find({ workId: workId, status: "pending" });
+        if (isAnySubmitExist) {
+            throw new Error('Work has pending submits cannot be deleted');
+        }
         const work = await Work.findByIdAndDelete(workId);
         if (!work) {
             throw new Error('Work not found');
