@@ -1,7 +1,8 @@
 const User = require("../User/user.model");
 const Withdraw = require("./withdraw.model");
 
-const createWithDraw = async (data) => {
+const createWithDraw = async (data) =>
+{
     try {
         const { amount, user } = data
         // check today any withdraw has created with this user
@@ -33,7 +34,8 @@ const createWithDraw = async (data) => {
 }
 // get all data
 
-const getAllData = async (query) => {
+const getAllData = async (query) =>
+{
     try {
         const page = parseInt(query.page) || 1;
         const limit = parseInt(query.limit) || 50;
@@ -45,12 +47,17 @@ const getAllData = async (query) => {
         if (query.user) {
             filters.user = query.user
         }
-        const start = new Date(query.search);
         if (query.search) {
+            const start = new Date(query.search);
+            start.setHours(0, 0, 0, 0); // Start of the day
+
+            const end = new Date(start);
+            end.setDate(start.getDate() + 1); // Next day start (exclusive)
+
             filters.createdAt = {
                 $gte: start,
-                $lt: new Date(start.getTime() + 24 * 60 * 60 * 1000)
-            }
+                $lt: end
+            };
         }
         const withDraws = await Withdraw.find(filters)
             .populate("user", "-password")
@@ -59,7 +66,8 @@ const getAllData = async (query) => {
             .limit(limit);
         const total = await Withdraw.countDocuments(filters);
         let totalWithdraw = 0
-        await withDraws.forEach(withdraw => {
+        await withDraws.forEach(withdraw =>
+        {
             totalWithdraw += withdraw.amount
         })
         return {
@@ -77,7 +85,8 @@ const getAllData = async (query) => {
 
 // get single data
 
-const getSingle = async (id) => {
+const getSingle = async (id) =>
+{
     try {
         const withDraw = await Withdraw.findById(id)
             .populate("user", "-password")
@@ -88,7 +97,8 @@ const getSingle = async (id) => {
     }
 }
 // update data
-const updateData = async (id, data) => {
+const updateData = async (id, data) =>
+{
     try {
         await Withdraw.findByIdAndUpdate(id, data, { new: true });
         return {
@@ -99,7 +109,8 @@ const updateData = async (id, data) => {
     }
 }
 // Reject data
-const rejectWithdraw = async (id) => {
+const rejectWithdraw = async (id) =>
+{
     try {
         const data = await Withdraw.findById(id);
         if (!data) {
@@ -116,7 +127,8 @@ const rejectWithdraw = async (id) => {
     }
 }
 // delete data
-const deleteData = async (id) => {
+const deleteData = async (id) =>
+{
     try {
         const withDraw = await Withdraw.findByIdAndDelete(id);
         return withDraw
