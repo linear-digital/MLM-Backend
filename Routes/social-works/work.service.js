@@ -61,7 +61,6 @@ const getAllWorks = async (user) =>
     try {
         const userRes = await User.findById(user);
         if (!userRes) throw new Error('User not found');
-        console.log(userRes);
         if (userRes.role === 'admin') {
             const works = await Work.find()
                 .sort({ status: 1, createdAt: -1 })
