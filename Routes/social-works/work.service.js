@@ -59,8 +59,8 @@ const getWorkById = async (workId) =>
 const getAllWorks = async (user) =>
 {
     try {
-        const user = await User.findById(user._id);
-        if (user.role === 'admin') {
+        const userRes = await User.findById(user);
+        if (userRes.role === 'admin') {
             const works = await Work.find().sort({ status: 1, createdAt: -1 });
             return works;
         }
