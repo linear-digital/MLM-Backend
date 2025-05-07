@@ -60,17 +60,40 @@ const getAllWorks = async (user) =>
 {
     try {
         const userRes = await User.findById(user);
+        if (!userRes) throw new Error('User not found');
+        console.log(userRes);
         if (userRes.role === 'admin') {
-            const works = await Work.find().sort({ status: 1, createdAt: -1 });
-            return works;
-        }
-        else {
-            const works = await Work.find({
-                workers: { $nin: [user._id.toString()] },
-            }).sort({ status: 1, createdAt: -1 });
-            return works;
-        }
+            const works = await Work.find()
+                .sort({ status: 1, createdAt: -1 })
+                .select('-workers');
 
+            const submits = await WorkSubmit.aggregate([
+                { $match: { status: 'pending' } },
+                {
+                    $group: {
+                        _id: '$workId',
+                        count: { $sum: 1 }
+                    },
+                },
+            ]);
+
+            const worksWithSubmits = works.map((work) =>
+            {
+                const submit = submits.find((s) => s._id.toString() === work._id.toString());
+                return {
+                    ...work.toObject(),
+                    count: submit ? submit.count : 0,
+                };
+            });
+
+            return worksWithSubmits;
+        } else {
+            const works = await Work.find({
+                workers: { $nin: [user._id?.toString() || user.toString()] },
+            }).sort({ status: 1, createdAt: -1 });
+
+            return works;
+        }
 
     } catch (error) {
         throw new Error('Error fetching works: ' + error.message);
@@ -132,9 +155,9 @@ const updateWorkSubmit = async (workSubmitId, workSubmitData) =>
 const deleteWork = async (workId) =>
 {
     try {
-        const isAnySubmitExist = WorkSubmit.find({ workId: workId, status: "pending" });
-        if (isAnySubmitExist) {
-            throw new Error('Work has pending submits cannot be deleted');
+        const isAnySubmitExist = await WorkSubmit.find({ workId: workId, status: "pending" });
+        if (isAnySubmitExist.length > 0) {
+            throw new Error(`Work has ${isAnySubmitExist.length} pending submits cannot be deleted`);
         }
         const work = await Work.findByIdAndDelete(workId);
         if (!work) {
