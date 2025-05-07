@@ -59,11 +59,19 @@ const getWorkById = async (workId) =>
 const getAllWorks = async (user) =>
 {
     try {
-        const works = await Work.find({
-            workers: { $nin: [user._id.toString()] },
-        }).sort({ status: 1, createdAt: -1 });
+        const user = await User.findById(user._id);
+        if (user.role === 'admin') {
+            const works = await Work.find().sort({ status: 1, createdAt: -1 });
+            return works;
+        }
+        else {
+            const works = await Work.find({
+                workers: { $nin: [user._id.toString()] },
+            }).sort({ status: 1, createdAt: -1 });
+            return works;
+        }
 
-        return works;
+
     } catch (error) {
         throw new Error('Error fetching works: ' + error.message);
     }
