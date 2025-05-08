@@ -62,8 +62,6 @@ const getAllData = async (query) =>
         const withDraws = await Withdraw.find(filters)
             .populate("user", "-password")
             .sort({ createdAt: query.reverse ? -1 : 1 })
-            .skip(skip)
-            .limit(limit);
         const total = await Withdraw.countDocuments(filters);
         let totalWithdraw = 0
         await withDraws.forEach(withdraw =>
