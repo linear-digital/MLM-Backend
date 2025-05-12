@@ -31,7 +31,7 @@ const document = multer({
   limits: { fileSize: 500 * 1024 * 1024 },// 500 MB
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
-      const destination = path.join("files/",);
+      const destination = path.join("../files/",);
       if (!fs.existsSync(destination)) {
         fs.mkdirSync(destination);
       }
