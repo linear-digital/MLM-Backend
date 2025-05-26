@@ -3,20 +3,21 @@ const mongoose = require("mongoose");
 const externalSchema = new mongoose.Schema({
     amount: {
         type: Number,
-        required: [true, "Withdraw amount is required"],
     },
     status: {
         type: String,
         enum: ["pending", "completed", "rejected"],
         default: "pending",
     },
+    reason: {
+        type: String
+    },
     video: {
         type: String,
-        required: [true, "Video  is required"],
     },
     image: {
         type: String,
-        required: [true, "Screenshot is required"],
+       
     },
     method: {
         type: String,

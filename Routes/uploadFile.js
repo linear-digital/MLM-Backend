@@ -49,27 +49,18 @@ cloudinary.config({
 });
 
 
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', document.single('image'), async (req, res) => {
   try {
-    const uploadStream = cloudinary.uploader.upload_stream({
-      folder: 'Media',
-    }, (error, result) => {
-      if (error) {
-        res.status(500).json({
-          success: false,
-          message: 'Error uploading image',
-          error: error,
-        });
-      } else {
-        res.json({
-          success: true,
-          message: 'Image uploaded successfully!',
-          url: result.secure_url,
-        });
-      }
-    });
-
-    uploadStream.end(req.file?.buffer);
+    if (!req.file) {
+      return res.status(400).send('No file uploaded.');
+    }
+    const url = `https://server.cnppromo.com/${req.file.path}`
+    await File.create({
+      info: req.file,
+      path: url,
+      type: req.file.fieldname
+    })
+    res.status(200).send({ message: 'File uploaded successfully', url: url });
   } catch (error) {
     res.status(500).send({
       message: error.message,
