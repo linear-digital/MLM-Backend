@@ -124,75 +124,135 @@ const withoutPass = async (req, res) =>
         });
     }
 }
-const getAllData = async (req, res) =>
+const getAllData = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
+  const skip = (page - 1) * limit;
+
+  const filters = {};
+
+  // Role filtering
+  if (req.query.admin === "true") {
+    filters.role = "admin";
+  } else if (req.query.moderator === "true") {
+    filters.role = "moderator";
+  } else {
+    filters.role = "user";
+  }
+
+  // Status filter
+  if (req.query.status) {
+    filters.status = req.query.status;
+  }
+
+  // Initialize search filter
+  const searchConditions = [];
+  if (req.query.search) {
+    const regex = new RegExp(req.query.search, "i");
+    searchConditions.push(
+      { username: { $regex: regex } },
+      { name: { $regex: regex } },
+      { email: { $regex: regex } },
+      { phone: { $regex: regex } }
+    );
+  }
+
+  // Moderator filter
+  const refferConditions = [];
+  if (req.user?.role === "moderator") {
+    refferConditions.push(
+      { reffer: { $in: req.user.allowedUsers || [] } },
+      { reffer: { $exists: false } },
+      { reffer: null }
+    );
+  }
+
+  // Combine all filters properly
+  if (searchConditions.length && refferConditions.length) {
+    filters.$and = [
+      { $or: refferConditions },
+      { $or: searchConditions }
+    ];
+  } else if (refferConditions.length) {
+    filters.$or = refferConditions;
+  } else if (searchConditions.length) {
+    filters.$or = searchConditions;
+  }
+
+  try {
+    const users = await User.find(filters)
+      .select("-password")
+      .populate("reffer", "-password")
+      .populate("allowedUsers", "name username email phone")
+      .skip(skip)
+      .sort({ createdAt: req.query.reverse ? -1 : 1 })
+      .limit(limit);
+
+    const total = await User.countDocuments(filters);
+    const grandTotal = await User.countDocuments({ role: "user" });
+    const active = await User.countDocuments({ status: "active" });
+    const pending = await User.countDocuments({ status: "pending" });
+
+    res.send({
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      grandTotal,
+      active,
+      pending,
+      users,
+    });
+  } catch (error) {
+    res.status(500).send({
+      message: error.message,
+    });
+  }
+};
+const giveAccess = async (req, res) =>
 {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
-    const filters = {};
-    if (req.query.status) {
-        filters.status = req.query.status
+    if (req.user.role !== 'admin') {
+        return res.status(403).send({
+            message: 'You are not authorized to access this route',
+        });
     }
-    if (req.query.search) {
-        filters.$or = [
-            {
-                username: {
-                    $regex: req.query.search,
-                    $options: "i"
-                }
-            },
-            {
-                name: {
-                    $regex: req.query.search,
-                    $options: "i"
-                }
-            },
-            {
-                email: {
-                    $regex: req.query.search,
-                    $options: "i"
-                }
-            },
-            {
-                phone: {
-                    $regex: req.query.search,
-                    $options: "i"
-                }
-            }
-        ]
+
+    const { userId } = req.body;
+    if (!userId) {
+        return res.status(400).send({
+            message: 'User ID is required',
+        });
     }
-    if (req.query.admin) {
-        filters.role = "admin"
-    }
-    else {
-        filters.role = "user"
-    }
+
     try {
-        const users = await User.find(filters)
-            .select("-password")
-            .populate("reffer", "-password")
-            .skip(skip)
-            .sort({ createdAt: req.query.reverse ? -1 : 1 })
-            .limit(limit);
-        const total = await User.countDocuments(filters);
-        const grandTotal = await User.countDocuments({ role: "user" });
-        const active = await User.countDocuments({ status: "active" });
-        const pending = await User.countDocuments({ status: "pending" });
-        res.send({
-            total,
-            page,
-            pages: Math.ceil(total / limit),
-            grandTotal,
-            active,
-            users,
-            pending
+        const targetUser = await User.findById(req.params.id);
+        if (!targetUser) {
+            return res.status(404).send({
+                message: 'Target user not found',
+            });
+        }
+
+        const isAlreadyAllowed = targetUser.allowedUsers.includes(userId);
+
+        const update = isAlreadyAllowed
+            ? { $pull: { allowedUsers: userId } }
+            : { $addToSet: { allowedUsers: userId } };
+
+        const updatedUser = await User.findByIdAndUpdate(req.params.id, update, { new: true });
+
+        res.status(200).send({
+            message: isAlreadyAllowed
+                ? 'Access revoked from user'
+                : 'Access granted to user',
+            data: updatedUser,
         });
     } catch (error) {
+        console.error(error);
         res.status(500).send({
-            message: error.message
+            message: 'An error occurred while updating access',
+            error: error.message,
         });
     }
-}
+};
 const getSingle = async (req, res) =>
 {
     try {
@@ -505,5 +565,6 @@ module.exports = {
     getStatistic,
     withoutPass,
     password,
-    resetPassword
+    resetPassword,
+    giveAccess
 }
