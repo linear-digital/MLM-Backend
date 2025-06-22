@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ["user", "admin", "modarator"],
+        enum: ["user", "admin", "moderator"],
         default: "user",
     },
     status: {
@@ -88,6 +88,10 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 1
     },
+    allowedUsers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }],
 }, {
     timestamps: true,
 });

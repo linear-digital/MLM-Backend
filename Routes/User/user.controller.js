@@ -35,6 +35,9 @@ router.get('/statistic', userService.getStatistic)
 // Update Data
 router.put('/:id',
     authChecker, userService.updateUser)
+// Moderator user access
+router.put('/access/:id',
+    authChecker, userService.giveAccess)
 
 // Update Password
 router.put('/password/:id',
