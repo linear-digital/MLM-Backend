@@ -403,7 +403,11 @@ const checkUser = async (req, res) =>
 }
 const activeAnUser = async (req, res) =>
 {
-    if (req.user.role !== "admin") {
+    const roles = [
+        "admin",
+        "moderator"
+    ]
+    if (roles.includes(req.user.role)) {
         return res.status(400).send({
             message: "You are not authorized to access this route"
         })
