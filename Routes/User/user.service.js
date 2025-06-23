@@ -403,15 +403,15 @@ const checkUser = async (req, res) =>
 }
 const activeAnUser = async (req, res) =>
 {
-    const roles = [
-        "admin",
-        "moderator"
-    ]
-    if (roles.includes(req.user.role)) {
-        return res.status(400).send({
-            message: "You are not authorized to access this route"
-        })
-    }
+    // const roles = [
+    //     "admin",
+    //     "moderator"
+    // ]
+    // if (roles.includes(req.user.role)) {
+    //     return res.status(400).send({
+    //         message: "You are not authorized to access this route"
+    //     })
+    // }
     try {
         const setting = await Setting.findById('66a4a094c8d1fd11daac6c28');
         const user = await User.findById(req.params.id);
