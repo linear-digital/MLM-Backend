@@ -99,7 +99,10 @@ const settingSchema = new mongoose.Schema({
     },
     copyright: {
         type: String
-    }
+    },
+    notice: {
+        type: String
+    },
 }, {
     timestamps: true
 });
