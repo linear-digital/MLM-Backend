@@ -3,64 +3,56 @@ const jwt = require("jsonwebtoken");
 
 const authChecker = async (req, res, next) => {
     try {
-        // Check if authorization header exists
+        console.log('Authorization header:', req.headers.authorization);
+        
         if (!req.headers.authorization) {
-            return res.status(401).json({
-                message: "Unauthorized: No authorization header"
-            });
+            console.log('No authorization header found');
+            return res.status(401).json({ message: "Unauthorized: No authorization header" });
         }
 
-        // Extract token from "Bearer <token>"
         const authHeader = req.headers.authorization;
         if (!authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({
-                message: "Unauthorized: Invalid authorization format"
-            });
+            console.log('Invalid authorization format:', authHeader);
+            return res.status(401).json({ message: "Unauthorized: Invalid authorization format" });
         }
 
         const token = authHeader.split(" ")[1];
-        if (!token) {
-            return res.status(401).json({
-                message: "Unauthorized: No token provided"
-            });
-        }
-
-        // Verify JWT token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log('Extracted token:', token ? 'Present' : 'Missing');
         
-        // Find user
-        const user = await User.findOne({ _id: decoded.id })
-            .populate("reffer")
-            .select("-password");
-            
-        if (!user) {
-            return res.status(401).json({
-                message: "Unauthorized: User not found"
-            });
+        if (!token) {
+            return res.status(401).json({ message: "Unauthorized: No token provided" });
         }
 
+        // DEBUG: Log the secret to ensure it's set
+        console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
+        
+       const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret-change-in-production");
+        console.log('Decoded token:', decoded);
+        
+        const user = await User.findOne({ _id: decoded.id }).select("-password");
+        
+        if (!user) {
+            console.log('User not found for ID:', decoded.id);
+            return res.status(401).json({ message: "Unauthorized: User not found" });
+        }
         req.user = user;
         next();
         
     } catch (error) {
-        console.error("Auth Middleware Error:", error.message);
+        console.error("Auth Error Details:");
+        console.error("Error name:", error.name);
+        console.error("Error message:", error.message);
+        console.error("Token that failed:", req.headers.authorization?.split(' ')[1]);
         
-        // Different error messages for different JWT errors
         if (error.name === 'JsonWebTokenError') {
-            return res.status(401).json({
-                message: "Unauthorized: Invalid token"
-            });
+            return res.status(401).json({ message: "Unauthorized: Invalid token" });
         }
         
         if (error.name === 'TokenExpiredError') {
-            return res.status(401).json({
-                message: "Unauthorized: Token expired"
-            });
+            return res.status(401).json({ message: "Unauthorized: Token expired" });
         }
 
-        res.status(401).json({
-            message: "Unauthorized: Authentication failed"
-        });
+        res.status(401).json({ message: "Unauthorized: Authentication failed" });
     }
 };
 
